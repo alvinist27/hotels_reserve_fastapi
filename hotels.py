@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Query
 
+from dependencies import PaginationDep
 from schemas.hotels import HotelPatchSchema, HotelSchema
 
 hotels_router = APIRouter(prefix='/hotels', tags=['Hotels'])
@@ -29,8 +30,7 @@ def get_hotel_to_update(hotel_id: int) -> dict[str, Any]:
 
 @hotels_router.get('/')
 def get_hotels(
-    page: int = Query(1, description='Номер страницы', gt=0),
-    per_page: int = Query(3, description='Отелей на странице', gt=0, lt=100),
+    pagination: PaginationDep,
     id: int | None = Query(None, description='ID отеля'),
     name: str | None = Query(None, description='Название отеля'),
     title: str | None = Query(None, description='Название отеля на русском'),
@@ -44,12 +44,12 @@ def get_hotels(
         if name and hotel['name'] != name:
             continue
         filtered_hotels.append(hotel)
-    current_offset = (page-1) * per_page
+    current_offset = (pagination.page-1) * pagination.per_page
     return {
-        'page': page,
-        'per_page': per_page,
+        'page': pagination.page,
+        'per_page': pagination.per_page,
         'total': len(filtered_hotels),
-        'items': filtered_hotels[current_offset:current_offset+per_page]
+        'items': filtered_hotels[current_offset:current_offset+pagination.per_page]
     }
 
 
