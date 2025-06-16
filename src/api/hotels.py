@@ -2,8 +2,8 @@ from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Query
 
-from dependencies import PaginationDep
-from schemas.hotels import HotelPatchSchema, HotelSchema
+from src.api.dependencies import PaginationDep
+from src.schemas.hotels import HotelPatchSchema, HotelSchema
 
 hotels_router = APIRouter(prefix='/hotels', tags=['Hotels'])
 
