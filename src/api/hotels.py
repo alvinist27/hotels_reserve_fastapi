@@ -1,21 +1,14 @@
 from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Query
+from sqlalchemy import insert, select
 
 from src.api.dependencies import PaginationDep
+from src.database import async_session
+from src.models.hotels import HotelModel
 from src.schemas.hotels import HotelPatchSchema, HotelSchema
 
 hotels_router = APIRouter(prefix='/hotels', tags=['Hotels'])
-
-hotels = [
-    {'id': 1, 'title': 'Sochi', 'name': 'sochi'},
-    {'id': 2, 'title': 'Дубай', 'name': 'dubai'},
-    {'id': 3, 'title': 'Мальдивы', 'name': 'maldivi'},
-    {'id': 4, 'title': 'Геленджик', 'name': 'gelendzhik'},
-    {'id': 5, 'title': 'Москва', 'name': 'moscow'},
-    {'id': 6, 'title': 'Казань', 'name': 'kazan'},
-    {'id': 7, 'title': 'Санкт-Петербург', 'name': 'spb'},
-]
 
 
 def get_hotel_to_update(hotel_id: int) -> dict[str, Any]:
@@ -29,51 +22,47 @@ def get_hotel_to_update(hotel_id: int) -> dict[str, Any]:
 
 
 @hotels_router.get('/')
-def get_hotels(
+async def get_hotels(
     pagination: PaginationDep,
-    id: int | None = Query(None, description='ID отеля'),
-    name: str | None = Query(None, description='Название отеля'),
-    title: str | None = Query(None, description='Название отеля на русском'),
+    location: str | None = Query(None, description='Адрес отеля'),
+    title: str | None = Query(None, description='Название отеля'),
 ):
-    filtered_hotels = []
-    for hotel in hotels:
-        if id and hotel['id'] != id:
-            continue
-        if title and hotel['title'] != title:
-            continue
-        if name and hotel['name'] != name:
-            continue
-        filtered_hotels.append(hotel)
     current_offset = (pagination.page-1) * pagination.per_page
-    return {
-        'page': pagination.page,
-        'per_page': pagination.per_page,
-        'total': len(filtered_hotels),
-        'items': filtered_hotels[current_offset:current_offset+pagination.per_page]
-    }
+    async with async_session() as session:
+        hotels_query = select(HotelModel)
+        if location:
+            hotels_query = hotels_query.where(HotelModel.location.ilike(f'%{location}%'))
+        if title:
+            hotels_query = hotels_query.where(HotelModel.title.ilike(f'%{title}%'))
+        hotels_query = (
+            hotels_query
+            .limit(limit=current_offset+pagination.per_page)
+            .offset(offset=current_offset)
+        )
+        result = await session.execute(hotels_query)
+        hotels = result.scalars().all()
+        return hotels
 
 
 @hotels_router.post('/')
-def create_hotel(hotel_data: HotelSchema):
-    global hotels
-    hotels.append({
-        'id': hotels[-1]['id'] + 1,
-        'title': hotel_data.title,
-        'name': hotel_data.name,
-    })
+async def create_hotel(hotel_data: HotelSchema):
+    async with async_session() as session:
+        insert_hotel_stmt = insert(HotelModel).values(**hotel_data.model_dump())
+        await session.execute(insert_hotel_stmt)
+        await session.commit()
     return {'status': 'OK'}
 
 
 @hotels_router.put('/{hotel_id}')
-def update_hotel(hotel_id: int, hotel_data: HotelSchema):
+async def update_hotel(hotel_id: int, hotel_data: HotelSchema):
     hotel_to_update = get_hotel_to_update(hotel_id)
     hotel_to_update['title'] = hotel_data.title
-    hotel_to_update['name'] = hotel_data.name
+    hotel_to_update['location'] = hotel_data.location
     return hotel_to_update
 
 
 @hotels_router.patch('/{hotel_id}')
-def partial_update_hotel(
+async def partial_update_hotel(
     hotel_id: int,
     hotel_data: HotelPatchSchema = Body(openapi_examples={
         '1': {
@@ -83,15 +72,15 @@ def partial_update_hotel(
             }
         },
         '2': {
-            'summary': 'Only name',
+            'summary': 'Only location',
             'value': {
-                'name': 'dubai_fountain',
+                'location': 'dubai_fountain',
             }
         },
         '3': {
-            'summary': 'Name and Title',
+            'summary': 'Location and Title',
             'value': {
-                'name': 'dubai_fountain',
+                'location': 'dubai_fountain',
                 'title': 'dubai Сочи 5 звезд у моря',
             }
         }
@@ -99,12 +88,12 @@ def partial_update_hotel(
 ):
     hotel_to_update = get_hotel_to_update(hotel_id)
     hotel_to_update['title'] = hotel_data.title if hotel_data.title is not None else hotel_to_update['title']
-    hotel_to_update['name'] = hotel_data.name if hotel_data.name is not None else hotel_to_update['name']
+    hotel_to_update['location'] = hotel_data.location if hotel_data.location is not None else hotel_to_update['location']
     return hotel_to_update
 
 
 @hotels_router.delete('/{hotel_id}')
-def delete_hotel(hotel_id: int):
+async def delete_hotel(hotel_id: int):
     global hotels
     hotels = [hotel for hotel in hotels if hotel['id'] != hotel_id]
     return {'status': 'OK'}
