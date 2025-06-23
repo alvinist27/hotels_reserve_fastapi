@@ -10,16 +10,6 @@ from src.schemas.hotels import HotelPatchSchema, HotelSchema
 hotels_router = APIRouter(prefix='/hotels', tags=['Hotels'])
 
 
-def get_hotel_to_update(hotel_id: int) -> dict[str, Any]:
-    hotel_to_update = None
-    for hotel in hotels:
-        if hotel['id'] == hotel_id:
-            hotel_to_update = hotel
-    if not hotel_to_update:
-        raise HTTPException(status_code=404, detail='Hotel not found')
-    return hotel_to_update
-
-
 @hotels_router.get('/')
 async def get_hotels(
     pagination: PaginationDep,
@@ -28,12 +18,18 @@ async def get_hotels(
 ):
     per_page = pagination.per_page or 5
     async with async_session() as session:
-        return HotelRepository(session=session).get_all(
+        return await HotelRepository(session=session).get_all(
             location=location,
             title=title,
             limit=per_page,
             offset=per_page * (pagination.page - 1),
         )
+
+
+@hotels_router.get('/{hotel_id}')
+async def get_hotel(hotel_id: int):
+    async with async_session() as session:
+        return await HotelRepository(session=session).get_one_or_none(id=hotel_id)
 
 
 @hotels_router.post('/', status_code=status.HTTP_201_CREATED)
@@ -77,10 +73,10 @@ async def partial_update_hotel(
         }
     })
 ):
-    hotel_to_update = get_hotel_to_update(hotel_id)
-    hotel_to_update['title'] = hotel_data.title if hotel_data.title is not None else hotel_to_update['title']
-    hotel_to_update['location'] = hotel_data.location if hotel_data.location is not None else hotel_to_update['location']
-    return hotel_to_update
+    async with async_session() as session:
+        await HotelRepository(session).update(id=hotel_id, exclude_unset=True, data=hotel_data)
+        await session.commit()
+    return {'status': 'OK'}
 
 
 @hotels_router.delete('/{hotel_id}')
