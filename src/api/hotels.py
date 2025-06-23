@@ -39,18 +39,17 @@ async def get_hotels(
 @hotels_router.post('/', status_code=status.HTTP_201_CREATED)
 async def create_hotel(hotel_data: HotelSchema):
     async with async_session() as session:
-        hotel = await HotelRepository(session).add(**hotel_data.model_dump())
+        hotel = await HotelRepository(session).add(hotel_data)
         await session.commit()
-    return {"status": "OK", "data": hotel}
-
+    return {'status': 'OK', 'data': hotel}
 
 
 @hotels_router.put('/{hotel_id}')
 async def update_hotel(hotel_id: int, hotel_data: HotelSchema):
-    hotel_to_update = get_hotel_to_update(hotel_id)
-    hotel_to_update['title'] = hotel_data.title
-    hotel_to_update['location'] = hotel_data.location
-    return hotel_to_update
+    async with async_session() as session:
+        await HotelRepository(session).update(id=hotel_id, data=hotel_data)
+        await session.commit()
+    return {'status': 'OK'}
 
 
 @hotels_router.patch('/{hotel_id}')
@@ -86,6 +85,7 @@ async def partial_update_hotel(
 
 @hotels_router.delete('/{hotel_id}')
 async def delete_hotel(hotel_id: int):
-    global hotels
-    hotels = [hotel for hotel in hotels if hotel['id'] != hotel_id]
+    async with async_session() as session:
+        await HotelRepository(session).delete(id=hotel_id)
+        await session.commit()
     return {'status': 'OK'}
