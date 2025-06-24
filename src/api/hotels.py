@@ -1,11 +1,9 @@
-from typing import Any
-
-from fastapi import APIRouter, Body, HTTPException, Query, status
+from fastapi import APIRouter, Body, Query, status
 
 from src.api.dependencies import PaginationDep
 from src.database import async_session
 from src.repositories.hotels import HotelRepository
-from src.schemas.hotels import HotelPatchSchema, HotelSchema
+from src.schemas.hotels import HotelAddSchema, HotelPatchSchema
 
 hotels_router = APIRouter(prefix='/hotels', tags=['Hotels'])
 
@@ -33,7 +31,7 @@ async def get_hotel(hotel_id: int):
 
 
 @hotels_router.post('/', status_code=status.HTTP_201_CREATED)
-async def create_hotel(hotel_data: HotelSchema):
+async def create_hotel(hotel_data: HotelAddSchema):
     async with async_session() as session:
         hotel = await HotelRepository(session).add(hotel_data)
         await session.commit()
@@ -41,7 +39,7 @@ async def create_hotel(hotel_data: HotelSchema):
 
 
 @hotels_router.put('/{hotel_id}')
-async def update_hotel(hotel_id: int, hotel_data: HotelSchema):
+async def update_hotel(hotel_id: int, hotel_data: HotelAddSchema):
     async with async_session() as session:
         await HotelRepository(session).update(id=hotel_id, data=hotel_data)
         await session.commit()
