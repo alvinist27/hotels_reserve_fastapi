@@ -9,3 +9,7 @@ class UserAddRequestSchema(BaseModel):
 class UserSchema(BaseModel):
     id: int
     email: EmailStr = Field(description='E-mail пользователя')
+
+
+class UserWithPasswordSchema(UserSchema):
+    password: str = Field(description='Пароль пользователя')

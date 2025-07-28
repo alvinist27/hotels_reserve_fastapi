@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     PROJECT_PATH: str = str(Path(__file__).parent.parent)
 
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
     model_config = SettingsConfigDict(env_file=f'{PROJECT_PATH}/.env')
 
     @property
