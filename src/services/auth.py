@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 import jwt
+from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
 from src.config import settings
@@ -16,9 +17,16 @@ class AuthService:
         return self.pwd_context.verify(plain_password, hashed_password)
 
     @staticmethod
-    def create_access_token(data: dict):
+    def encode_access_token(data: dict) -> str:
         to_encode = data.copy()
         expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         to_encode.update({'exp': expire})
         encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
         return encoded_jwt
+
+    @staticmethod
+    def decode_access_token(access_token: str) -> dict:
+        try:
+            return jwt.decode(access_token, key=settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        except jwt.exceptions.PyJWTError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid token provided')
