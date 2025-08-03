@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class HotelAddSchema(BaseModel):
-    location: str = Field(description='Адрес отеля'),
+    location: str = Field(description='Адрес отеля')
     title: str = Field(description='Название отеля')
 
 
