@@ -1,3 +1,4 @@
+from src.repositories.bookings import BookingRepository
 from src.repositories.hotels import HotelRepository
 from src.repositories.rooms import RoomRepository
 from src.repositories.users import UserRepository
@@ -10,6 +11,7 @@ class DBManager:
     async def __aenter__(self):
         self.session = self.session_factory()
 
+        self.bookings = BookingRepository(self.session)
         self.hotels = HotelRepository(self.session)
         self.rooms = RoomRepository(self.session)
         self.users = UserRepository(self.session)
