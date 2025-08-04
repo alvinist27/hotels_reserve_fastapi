@@ -1,26 +1,24 @@
-from fastapi import APIRouter, Body, Query, status
+from fastapi import APIRouter, Body, status
 
-from src.database import async_session
-from src.repositories.rooms import RoomRepository
-from src.schemas.rooms import RoomAddSchema, RoomPatchSchema, RoomPatchRequestSchema, RoomAddRequestSchema
+from src.api.dependencies import DBDep
+from src.schemas.rooms import RoomAddRequestSchema, RoomAddSchema, RoomPatchRequestSchema, RoomPatchSchema
 
 rooms_router = APIRouter(prefix='/hotels', tags=['Rooms'])
 
 
 @rooms_router.get('/{hotel_id}/rooms')
-async def get_rooms(hotel_id: int):
-    async with async_session() as session:
-        return await RoomRepository(session=session).get_filtered(hotel_id=hotel_id)
+async def get_rooms(db: DBDep, hotel_id: int):
+    return await db.rooms.get_filtered(hotel_id=hotel_id)
 
 
 @rooms_router.get('/{hotel_id}/rooms/{room_id}')
-async def get_room(hotel_id: int, room_id: int):
-    async with async_session() as session:
-        return await RoomRepository(session=session).get_one_or_none(id=room_id, hotel_id=hotel_id)
+async def get_room(db: DBDep, hotel_id: int, room_id: int):
+    return await db.rooms.get_one_or_none(id=room_id, hotel_id=hotel_id)
 
 
 @rooms_router.post('/{hotel_id}/rooms', status_code=status.HTTP_201_CREATED)
 async def create_room(
+    db: DBDep,
     hotel_id: int,
     room_data: RoomAddRequestSchema = Body(
         openapi_examples={
@@ -37,23 +35,22 @@ async def create_room(
     ),
 ):
     create_data = RoomAddSchema(**room_data.model_dump(), hotel_id=hotel_id)
-    async with async_session() as session:
-        room = await RoomRepository(session).add(create_data)
-        await session.commit()
+    room = await db.rooms.add(create_data)
+    await db.commit()
     return {'status': 'OK', 'data': room}
 
 
 @rooms_router.put('/{hotel_id}/rooms/{room_id}')
-async def update_room(hotel_id: int, room_id: int, room_data: RoomAddRequestSchema):
+async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAddRequestSchema):
     update_data = RoomAddSchema(**room_data.model_dump(), hotel_id=hotel_id)
-    async with async_session() as session:
-        await RoomRepository(session).update(id=room_id, hotel_id=hotel_id, data=update_data)
-        await session.commit()
+    await db.rooms.update(id=room_id, hotel_id=hotel_id, data=update_data)
+    await db.commit()
     return {'status': 'OK'}
 
 
 @rooms_router.patch('/{hotel_id}/rooms/{room_id}')
 async def partial_update_room(
+    db: DBDep,
     hotel_id: int,
     room_id: int,
     room_data: RoomPatchRequestSchema = Body(openapi_examples={
@@ -79,15 +76,13 @@ async def partial_update_room(
     }),
 ):
     update_data = RoomPatchSchema(**room_data.model_dump(), hotel_id=hotel_id)
-    async with async_session() as session:
-        await RoomRepository(session).update(id=room_id, hotel_id=hotel_id, exclude_unset=True, data=update_data)
-        await session.commit()
+    await db.rooms.update(id=room_id, hotel_id=hotel_id, exclude_unset=True, data=update_data)
+    await db.commit()
     return {'status': 'OK'}
 
 
 @rooms_router.delete('/{hotel_id}/rooms/{room_id}')
-async def delete_room(hotel_id: int, room_id: int):
-    async with async_session() as session:
-        await RoomRepository(session).delete(hotel_id=hotel_id, id=room_id)
-        await session.commit()
+async def delete_room(db: DBDep, hotel_id: int, room_id: int):
+    await db.rooms.delete(hotel_id=hotel_id, id=room_id)
+    await db.commit()
     return {'status': 'OK'}
