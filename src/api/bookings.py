@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from datetime import date
+
+from fastapi import APIRouter, HTTPException, Query, status
 
 from src.api.dependencies import DBDep, UserIDDep
 from src.schemas.booking import BookingAddSchema, BookingRequestAddSchema, BookingSchema
@@ -7,8 +9,15 @@ bookings_router = APIRouter(prefix='/bookings', tags=['Bookings'])
 
 
 @bookings_router.get('/')
-async def get_bookings(db: DBDep, _: UserIDDep) -> list[BookingSchema]:
-    return await db.bookings.get_all()
+async def get_bookings(
+    db: DBDep,
+    _: UserIDDep,
+    hotel_id: int = Query(),
+    date_from: date = Query(example='2025-08-05'),
+    date_to: date = Query(example='2025-08-08'),
+) -> list[BookingSchema]:
+    result = await db.bookings.get_filtered_by_date(hotel_id=hotel_id, date_from=date_from, date_to=date_to)
+    return result
 
 
 @bookings_router.get('/me')

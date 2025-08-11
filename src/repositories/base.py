@@ -11,8 +11,12 @@ class BaseRepository:
     def __init__(self, session):
         self.session = session
 
-    async def get_filtered(self, **filter_by) -> list[BaseModel]:
-        query = select(self.model).filter_by(**filter_by)
+    async def get_filtered(self, *filter_values, **filter_by) -> list[BaseModel]:
+        query = (
+            select(self.model)
+            .filter(*filter_values)
+            .filter_by(**filter_by)
+        )
         result = await self.session.execute(query)
         return [self.schema.model_validate(row, from_attributes=True) for row in result.scalars().all()]
 
