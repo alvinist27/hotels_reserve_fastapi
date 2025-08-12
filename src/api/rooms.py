@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Body, status
-
+from fastapi import APIRouter, Body, status, Query
+from datetime import date
 from src.api.dependencies import DBDep
 from src.schemas.facilities import RoomFacilitySchema
 from src.schemas.rooms import RoomAddRequestSchema, RoomAddSchema, RoomPatchRequestSchema, RoomPatchSchema
@@ -8,8 +8,13 @@ rooms_router = APIRouter(prefix='/hotels', tags=['Rooms'])
 
 
 @rooms_router.get('/{hotel_id}/rooms')
-async def get_rooms(db: DBDep, hotel_id: int):
-    return await db.rooms.get_filtered(hotel_id=hotel_id)
+async def get_rooms(
+    db: DBDep,
+    hotel_id: int,
+    date_from: date = Query(example='2024-08-05'),
+    date_to: date = Query(example='2024-08-08'),
+):
+    return await db.rooms.get_filtered_by_time(hotel_id=hotel_id, date_from=date_from, date_to=date_to)
 
 
 @rooms_router.get('/{hotel_id}/rooms/{room_id}')
@@ -90,9 +95,8 @@ async def partial_update_room(
         },
     }),
 ):
-    if any((room_data.title, room_data.description, room_data.price, room_data.quantity)):
-        update_data = RoomPatchSchema(**room_data.model_dump(), hotel_id=hotel_id)
-        await db.rooms.update(id=room_id, hotel_id=hotel_id, exclude_unset=True, data=update_data)
+    update_data = RoomPatchSchema(**room_data.model_dump(), hotel_id=hotel_id)
+    await db.rooms.update(id=room_id, hotel_id=hotel_id, exclude_unset=True, data=update_data)
     if room_data.facility_ids is not None:
         await db.rooms_facilities.update_bulk(
             room_data.facility_ids,

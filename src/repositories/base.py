@@ -43,7 +43,7 @@ class BaseRepository:
         update_stmt = (
             update(self.model)
             .filter_by(**filter_by)
-            .values(**data.model_dump(exclude_unset=exclude_unset))
+            .values(**data.model_dump(exclude_unset=exclude_unset, exclude_none=exclude_unset))
         )
         await self.session.execute(update_stmt)
 
