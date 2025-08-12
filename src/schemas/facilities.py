@@ -7,3 +7,8 @@ class FacilityAddSchema(BaseModel):
 
 class FacilitySchema(FacilityAddSchema):
     id: int
+
+
+class RoomFacilitySchema(BaseModel):
+    facility_id: int
+    room_id: int

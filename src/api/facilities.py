@@ -8,7 +8,7 @@ facilities_router = APIRouter(prefix='/facilities', tags=['Facilities'])
 
 @facilities_router.get('/')
 async def get_facilities(db: DBDep) -> list[FacilitySchema]:
-    return await db.facilities.get_filtered()
+    return await db.facilities.get_all()
 
 
 @facilities_router.post('/', status_code=status.HTTP_201_CREATED)

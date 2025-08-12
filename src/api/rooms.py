@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body, status
 
 from src.api.dependencies import DBDep
+from src.schemas.facilities import RoomFacilitySchema
 from src.schemas.rooms import RoomAddRequestSchema, RoomAddSchema, RoomPatchRequestSchema, RoomPatchSchema
 
 rooms_router = APIRouter(prefix='/hotels', tags=['Rooms'])
@@ -29,6 +30,7 @@ async def create_room(
                     'description': 'Оч хороший номер',
                     'price': 15000,
                     'quantity': 5,
+                    'facility_ids': [1],
                 },
             },
         },
@@ -36,6 +38,9 @@ async def create_room(
 ):
     create_data = RoomAddSchema(**room_data.model_dump(), hotel_id=hotel_id)
     room = await db.rooms.add(create_data)
+    await db.rooms_facilities.add_bulk([
+        RoomFacilitySchema(room_id=room.id, facility_id=facility_id) for facility_id in room_data.facility_ids
+    ])
     await db.commit()
     return {'status': 'OK', 'data': room}
 
@@ -44,6 +49,10 @@ async def create_room(
 async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAddRequestSchema):
     update_data = RoomAddSchema(**room_data.model_dump(), hotel_id=hotel_id)
     await db.rooms.update(id=room_id, hotel_id=hotel_id, data=update_data)
+    await db.rooms_facilities.update_bulk(
+        room_data.facility_ids,
+        room_id=room_id,
+    )
     await db.commit()
     return {'status': 'OK'}
 
@@ -73,10 +82,22 @@ async def partial_update_room(
                 'title': 'President LUX',
             },
         },
+        '4': {
+            'summary': 'facilities',
+            'value': {
+                'facility_ids': [1],
+            },
+        },
     }),
 ):
-    update_data = RoomPatchSchema(**room_data.model_dump(), hotel_id=hotel_id)
-    await db.rooms.update(id=room_id, hotel_id=hotel_id, exclude_unset=True, data=update_data)
+    if any((room_data.title, room_data.description, room_data.price, room_data.quantity)):
+        update_data = RoomPatchSchema(**room_data.model_dump(), hotel_id=hotel_id)
+        await db.rooms.update(id=room_id, hotel_id=hotel_id, exclude_unset=True, data=update_data)
+    if room_data.facility_ids is not None:
+        await db.rooms_facilities.update_bulk(
+            room_data.facility_ids,
+            room_id=room_id,
+        )
     await db.commit()
     return {'status': 'OK'}
 
