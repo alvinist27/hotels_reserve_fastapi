@@ -2,11 +2,12 @@ from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
 
 from src.database import Base
+from src.repositories.mappers.base import DataMapper
 
 
 class BaseRepository:
     model: Base = None
-    schema: BaseModel = None
+    mapper: DataMapper = None
 
     def __init__(self, session):
         self.session = session
@@ -18,7 +19,7 @@ class BaseRepository:
             .filter_by(**filter_by)
         )
         result = await self.session.execute(query)
-        return [self.schema.model_validate(row, from_attributes=True) for row in result.scalars().all()]
+        return [self.mapper.map_to_domain_entity(row) for row in result.scalars().all()]
 
     async def get_all(self, *args, **kwargs) -> list[BaseModel]:
         return await self.get_filtered()
@@ -27,13 +28,13 @@ class BaseRepository:
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         row = result.scalars().one_or_none()
-        return None if row is None else self.schema.model_validate(row, from_attributes=True)
+        return None if row is None else self.mapper.map_to_domain_entity(row)
 
     async def add(self, data: BaseModel) -> BaseModel:
         insert_statement = insert(self.model).values(**data.model_dump()).returning(self.model)
         insert_result = await self.session.execute(insert_statement)
         row = insert_result.scalars().one()
-        return self.schema.model_validate(row, from_attributes=True)
+        return self.mapper.map_to_domain_entity(row)
 
     async def add_bulk(self, add_data: list[BaseModel]) -> None:
         insert_statement = insert(self.model).values([item.model_dump() for item in add_data])

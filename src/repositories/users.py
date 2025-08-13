@@ -3,12 +3,13 @@ from sqlalchemy import select
 
 from src.models.users import UserORM
 from src.repositories.base import BaseRepository
-from src.schemas.users import UserSchema, UserWithPasswordSchema
+from src.repositories.mappers.mappers import UserDataMapper
+from src.schemas.users import UserWithPasswordSchema
 
 
 class UserRepository(BaseRepository):
     model = UserORM
-    schema = UserSchema
+    mapper = UserDataMapper
 
     async def get_user_with_password(self, email: EmailStr) -> BaseModel | None:
         query = select(self.model).filter_by(email=email)

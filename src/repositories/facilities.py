@@ -1,17 +1,18 @@
 from src.models.facilities import FacilityORM, RoomFacilityORM
 from src.repositories.base import BaseRepository
+from src.repositories.mappers.mappers import FacilityDataMapper
 from src.schemas.facilities import FacilitySchema, RoomFacilitySchema
 from sqlalchemy import select, delete
 
 
 class FacilityRepository(BaseRepository):
     model = FacilityORM
-    schema = FacilitySchema
+    mapper = FacilityDataMapper
 
 
 class RoomFacilityRepository(BaseRepository):
     model = RoomFacilityORM
-    schema = RoomFacilitySchema
+    mapper = FacilityDataMapper
 
     async def update_bulk(self, data: list[id], **filter_by) -> None:
         room_id = filter_by.get('room_id')
