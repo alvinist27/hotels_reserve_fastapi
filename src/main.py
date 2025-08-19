@@ -1,4 +1,5 @@
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
@@ -6,19 +7,31 @@ from fastapi import FastAPI
 
 sys.path.append(str(Path(__file__).parent.parent))
 
+from src.init import redis_manager
 from src.api.auth import auth_router
 from src.api.bookings import bookings_router
 from src.api.facilities import facilities_router
 from src.api.hotels import hotels_router
 from src.api.rooms import rooms_router
+from src.api.images import images_router
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await redis_manager.connect()
+    yield
+    await redis_manager.close()
+
+
+app = FastAPI(lifespan=lifespan)
+
 app.include_router(auth_router)
 app.include_router(bookings_router)
 app.include_router(facilities_router)
 app.include_router(hotels_router)
 app.include_router(rooms_router)
+app.include_router(images_router)
+
 
 if __name__ == '__main__':
     uvicorn.run('main:app', port=8080, reload=True)
