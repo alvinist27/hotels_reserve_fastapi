@@ -11,8 +11,8 @@ rooms_router = APIRouter(prefix='/hotels', tags=['Rooms'])
 async def get_rooms(
     db: DBDep,
     hotel_id: int,
-    date_from: date = Query(example='2024-08-05'),
-    date_to: date = Query(example='2024-08-08'),
+    date_from: date = Query(examples=['2024-08-05']),
+    date_to: date = Query(examples=['2024-08-08']),
 ):
     return await db.rooms.get_filtered_by_time(hotel_id=hotel_id, date_from=date_from, date_to=date_to)
 
@@ -43,9 +43,10 @@ async def create_room(
 ):
     create_data = RoomAddSchema(**room_data.model_dump(), hotel_id=hotel_id)
     room = await db.rooms.add(create_data)
-    await db.rooms_facilities.add_bulk([
-        RoomFacilitySchema(room_id=room.id, facility_id=facility_id) for facility_id in room_data.facility_ids
-    ])
+    if room_data.facility_ids:
+        await db.rooms_facilities.add_bulk([
+            RoomFacilitySchema(room_id=room.id, facility_id=facility_id) for facility_id in room_data.facility_ids
+        ])
     await db.commit()
     return {'status': 'OK', 'data': room}
 

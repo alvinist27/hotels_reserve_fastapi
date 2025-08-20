@@ -24,7 +24,7 @@ class RoomAddRequestSchema(BaseModel):
     description: str = Field(default='', description='Описание комнаты')
     price: int = Field(description='Цена комнаты')
     quantity: int = Field(description='Количество комнат')
-    facility_ids: list[int] | None = Field(description='ID удобства')
+    facility_ids: list[int] | None = Field(description='ID удобства', default=None)
 
 
 class RoomAddSchema(BaseModel):

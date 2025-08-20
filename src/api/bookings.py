@@ -13,8 +13,8 @@ async def get_bookings(
     db: DBDep,
     _: UserIDDep,
     hotel_id: int = Query(),
-    date_from: date = Query(example='2025-08-05'),
-    date_to: date = Query(example='2025-08-08'),
+    date_from: date = Query(examples=['2025-08-05']),
+    date_to: date = Query(examples=['2025-08-08']),
 ) -> list[BookingSchema]:
     result = await db.bookings.get_filtered_by_date(hotel_id=hotel_id, date_from=date_from, date_to=date_to)
     return result

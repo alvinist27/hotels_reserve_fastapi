@@ -10,8 +10,8 @@ hotels_router = APIRouter(prefix='/hotels', tags=['Hotels'])
 async def get_hotels(
     db: DBDep,
     pagination: PaginationDep,
-    date_from: date = Query(example='2024-08-05'),
-    date_to: date = Query(example='2024-08-08'),
+    date_from: date = Query(examples=['2024-08-05']),
+    date_to: date = Query(examples=['2024-08-08']),
     location: str | None = Query(None, description='Адрес отеля'),
     title: str | None = Query(None, description='Название отеля'),
 ):
