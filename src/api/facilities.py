@@ -8,7 +8,7 @@ facilities_router = APIRouter(prefix='/facilities', tags=['Facilities'])
 
 
 @facilities_router.get('/')
-@cache(expire=60)
+# @cache(expire=60)
 async def get_facilities(db: DBDep) -> list[FacilitySchema]:
     return await db.facilities.get_all()
 
