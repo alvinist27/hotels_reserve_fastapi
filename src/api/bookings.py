@@ -26,11 +26,14 @@ async def get_user_bookings(db: DBDep, user_id: UserIDDep) -> list[BookingSchema
 
 
 @bookings_router.post('/')
-async def get_user_bookings(db: DBDep, user_id: UserIDDep, booking_data: BookingRequestAddSchema) -> dict:
+async def add_user_booking(db: DBDep, user_id: UserIDDep, booking_data: BookingRequestAddSchema) -> dict:
     room = await db.rooms.get_one_or_none(id=booking_data.room_id)
     if not room:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Room with specifed room_id not found')
     create_data = BookingAddSchema(**booking_data.model_dump(), user_id=user_id, price=room.price)
-    booking = await db.bookings.add(create_data)
+    try:
+        booking = await db.bookings.add_booking(create_data, room.hotel_id)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='No available rooms')
     await db.commit()
     return {'status': 'OK', 'data': booking}

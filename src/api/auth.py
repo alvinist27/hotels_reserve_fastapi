@@ -19,15 +19,19 @@ async def login(db: DBDep, user_data: UserAddRequestSchema, response: Response):
 
 @auth_router.post('/register', status_code=status.HTTP_201_CREATED)
 async def register(db: DBDep, user_data: UserAddRequestSchema):
-    user_data.password = AuthService().hash_password(user_data.password)
-    await db.users.add(user_data)
-    await db.commit()
+    try:
+        user_data.password = AuthService().hash_password(user_data.password)
+        await db.users.add(user_data)
+        await db.commit()
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='User already exists')
     return {'status': 'OK'}
 
 
 @auth_router.get('/me', status_code=status.HTTP_201_CREATED)
-async def get_user_info(user_id: UserIDDep):
-    return {'user_id': user_id}
+async def get_user_info(db: DBDep, user_id: UserIDDep):
+    user = await db.users.get_one_or_none(id=user_id)
+    return user
 
 
 @auth_router.post('/logout', status_code=status.HTTP_204_NO_CONTENT)

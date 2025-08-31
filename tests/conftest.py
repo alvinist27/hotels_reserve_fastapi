@@ -1,4 +1,9 @@
+# ruff: noqa: E402
+
 import json
+from unittest import mock
+
+mock.patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f).start()
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -62,5 +67,21 @@ async def register_user(ac, setup_database):
             'password': '1234',
         },
     )
+
+
+@pytest.fixture(scope='session')
+async def authenticated_ac(ac, register_user):
+    response = await ac.post(
+        '/auth/login',
+        json={
+            'email': 'kot@pes.com',
+            'password': '1234',
+        },
+    )
+    assert response.status_code == 201
+    assert ac.cookies.get('access_token') is not None
+    assert ac.cookies.get('access_token') == response.json().get('access_token')
+    yield ac
+
 
 app.dependency_overrides[get_db] = get_db_null_pool
