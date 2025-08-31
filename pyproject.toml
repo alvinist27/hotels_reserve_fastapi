@@ -1,0 +1,105 @@
+[project]
+name = "hotels_reserve"
+version = "0.1.0"
+description = "Hotels reserve Project"
+authors = [
+    {name = "hotamov"},
+]
+readme = "README.md"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "single"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.ruff.lint]
+select = [
+    # base
+    "F",   # pyflakes
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    # style
+    "I",   # isort
+    # others
+    "UP",  # pyupgrade
+    "C90", # mccabe
+    # "DJ",  # flake8-django
+    "C4",  # flake8-comprehensions
+    "BLE", # flake8-blind-except
+    "T20", # flake8-print
+]
+ignore = [
+    "B904",  # raise-without-from-inside-except
+    "S101",  # checks for uses of the assert keyword
+    "BLE001",
+]
+
+[tool.ruff.lint.pylint]
+max-args = 12
+max-returns = 10
+
+[tool.ruff.lint.per-file-ignores]
+
+
+[tool.mypy]
+python_version = "3.12"
+
+disallow_untyped_defs = false
+check_untyped_defs = true
+disallow_incomplete_defs = true
+
+show_error_context = true
+show_traceback = true
+strict_optional = true
+strict_equality = true
+
+follow_untyped_imports = true
+ignore_missing_imports = true
+follow_imports = "skip"
+
+warn_no_return = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_incomplete_stub = false
+
+
+[tool.pytest.ini_options]
+python_files = ["tests.py", "test_*.py"]
+testpaths = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = ["pass", "\\.\\.\\."]

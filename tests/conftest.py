@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 
 from src.api.dependencies import get_db
 from src.config import settings
-from src.database import async_session_maker_null_pool, Base, engine_null_pool
+from src.database import Base, async_session_maker_null_pool, engine_null_pool
 from src.main import app
 from src.schemas.hotels import HotelAddSchema
 from src.schemas.rooms import RoomAddSchema

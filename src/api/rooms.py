@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Body, status, Query
 from datetime import date
+
+from fastapi import APIRouter, Body, Query, status
+
 from src.api.dependencies import DBDep
 from src.schemas.facilities import RoomFacilitySchema
 from src.schemas.rooms import RoomAddRequestSchema, RoomAddSchema, RoomPatchRequestSchema, RoomPatchSchema

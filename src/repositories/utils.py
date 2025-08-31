@@ -2,7 +2,6 @@ from datetime import date
 
 from sqlalchemy import func, select
 
-from src.database import engine
 from src.models.bookings import BookingORM
 from src.models.rooms import RoomORM
 
@@ -42,5 +41,4 @@ def get_rooms_ids_for_booking(date_from: date, date_to: date, hotel_id: int | No
             rooms_left_table_cte.c.room_id.in_(room_id_from_hotel_subquery),
         )
     )
-    print(room_ids_to_get.compile(bind=engine, compile_kwargs={'literal_binds': True}))
     return room_ids_to_get
