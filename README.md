@@ -26,3 +26,8 @@ docker run --name hotels_reserve \
     -p 8080:8080 \
     --network=HotelsNetwork \
     hotels
+
+docker run --name hotels_nginx \
+    --volume ./nginx.conf:/etc/nginx/nginx.conf \
+    --network=HotelsNetwork \
+    --rm -p 80:80 nginx
