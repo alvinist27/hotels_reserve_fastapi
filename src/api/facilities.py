@@ -1,23 +1,20 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Body
 from fastapi_cache.decorator import cache
 
 from src.api.dependencies import DBDep
-from src.schemas.facilities import FacilityAddSchema, FacilitySchema
+from src.schemas.facilities import FacilityAddSchema
+from src.services.facilities import FacilityService
 
 facilities_router = APIRouter(prefix='/facilities', tags=['Facilities'])
 
 
-@facilities_router.get('/')
-@cache(expire=60)
-async def get_facilities(db: DBDep) -> list[FacilitySchema]:
-    return await db.facilities.get_all()
+@facilities_router.get('')
+@cache(expire=10)
+async def get_facilities(db: DBDep):
+    return await FacilityService(db).get_facilities()
 
 
-@facilities_router.post('/', status_code=status.HTTP_201_CREATED)
-async def create_facility(
-    db: DBDep,
-    facility_data: FacilityAddSchema,
-) -> dict:
-    facility = await db.facilities.add(facility_data)
-    await db.commit()
+@facilities_router.post('')
+async def create_facility(db: DBDep, facility_data: FacilityAddSchema = Body()):
+    facility = await FacilityService(db).create_facility(facility_data)
     return {'status': 'OK', 'data': facility}

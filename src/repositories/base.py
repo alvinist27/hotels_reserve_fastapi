@@ -1,7 +1,12 @@
+import logging
+
+from asyncpg.exceptions import UniqueViolationError
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from src.database import Base
+from src.exceptions import ObjectAlreadyExistsException, ObjectNotFoundException
 from src.repositories.mappers.base import DataMapper
 
 
@@ -24,6 +29,15 @@ class BaseRepository:
     async def get_all(self, *args, **kwargs) -> list[BaseModel]:
         return await self.get_filtered()
 
+    async def get_one(self, **filter_by) -> BaseModel:
+        query = select(self.model).filter_by(**filter_by)
+        result = await self.session.execute(query)
+        try:
+            model = result.scalar_one()
+        except NoResultFound:
+            raise ObjectNotFoundException
+        return self.mapper.map_to_domain_entity(model)
+
     async def get_one_or_none(self, **filter_by) -> BaseModel | None:
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
@@ -32,8 +46,14 @@ class BaseRepository:
 
     async def add(self, data: BaseModel) -> BaseModel:
         insert_statement = insert(self.model).values(**data.model_dump()).returning(self.model)
-        insert_result = await self.session.execute(insert_statement)
-        row = insert_result.scalars().one()
+        try:
+            insert_result = await self.session.execute(insert_statement)
+            row = insert_result.scalars().one()
+        except IntegrityError as exception:
+            logging.error(f'IntegrityError while add! data:{data} type: {exception.orig.__cause__} exc: {exception}')
+            if isinstance(exception.orig.__cause__, UniqueViolationError):
+                raise ObjectAlreadyExistsException from exception
+            raise exception
         return self.mapper.map_to_domain_entity(row)
 
     async def add_bulk(self, add_data: list[BaseModel]) -> None:

@@ -4,13 +4,13 @@ from tests.conftest import get_db_null_pool
 
 
 @pytest.mark.parametrize('room_id, date_from, date_to, status_code', [
-    (1, '2024-08-01', '2024-08-10', 200),
-    (1, '2024-08-02', '2024-08-11', 200),
-    (1, '2024-08-03', '2024-08-12', 200),
-    (1, '2024-08-04', '2024-08-13', 200),
-    (1, '2024-08-05', '2024-08-14', 200),
-    (1, '2024-08-06', '2024-08-15', 400),
-    (1, '2024-08-17', '2024-08-25', 200),
+    (1, '2024-08-01', '2024-08-10', 201),
+    (1, '2024-08-02', '2024-08-11', 201),
+    (1, '2024-08-03', '2024-08-12', 201),
+    (1, '2024-08-04', '2024-08-13', 201),
+    (1, '2024-08-05', '2024-08-14', 201),
+    (1, '2024-08-06', '2024-08-15', 409),
+    (1, '2024-08-17', '2024-08-25', 201),
 ])
 async def test_add_booking(
     room_id,
@@ -21,7 +21,7 @@ async def test_add_booking(
     authenticated_ac
 ):
     response = await authenticated_ac.post(
-        '/bookings/',
+        '/bookings',
         json={
             'room_id': room_id,
             'date_from': date_from,
@@ -58,13 +58,13 @@ async def test_my_bookings(
     delete_bookings,
 ):
     response = await authenticated_ac.post(
-        '/bookings/',
+        '/bookings',
         json={
             'room_id': room_id,
             'date_from': date_from,
             'date_to': date_to,
         }
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     response = await authenticated_ac.get('/bookings/me')
     assert len(response.json()) == booking_count

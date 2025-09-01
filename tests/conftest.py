@@ -78,7 +78,7 @@ async def authenticated_ac(ac, register_user):
             'password': '1234',
         },
     )
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert ac.cookies.get('access_token') is not None
     assert ac.cookies.get('access_token') == response.json().get('access_token')
     yield ac

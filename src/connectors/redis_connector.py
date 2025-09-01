@@ -1,3 +1,5 @@
+import logging
+
 import redis.asyncio as redis
 
 
@@ -9,7 +11,9 @@ class RedisManager:
         self.port = port
 
     async def connect(self):
+        logging.info(f'Connecting to Redis server {self.host}:{self.port}')
         self._redis = await redis.Redis(host=self.host, port=self.port)
+        logging.info(f'Connected to Redis server {self.host}:{self.port}')
 
     async def set(self, key: str, value: str, expire: int = None):
         if expire:

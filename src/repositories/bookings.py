@@ -3,12 +3,13 @@ from datetime import date
 from pydantic import BaseModel
 from sqlalchemy import select
 
+from src.exceptions import AllRoomsAreBookedException
 from src.models.bookings import BookingORM
 from src.models.rooms import RoomORM
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import BookingDataMapper
 from src.repositories.utils import get_rooms_ids_for_booking
-from src.schemas.booking import BookingAddSchema
+from src.schemas.bookings import BookingAddSchema
 
 
 class BookingRepository(BaseRepository):
@@ -34,5 +35,5 @@ class BookingRepository(BaseRepository):
         rooms_ids_to_book: list[int] = rooms_ids_to_book_res.scalars().all()
 
         if data.room_id not in rooms_ids_to_book:
-            raise Exception
+            raise AllRoomsAreBookedException
         return await self.add(data)
