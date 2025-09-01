@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     networks:
-      - myNetwork
+      - HotelsNetwork
     env_file:
       - .env
 
@@ -15,7 +15,7 @@ services:
     build:
       context: .
     networks:
-      - myNetwork
+      - HotelsNetwork
     env_file:
       - .env
     command: "celery --app=src.tasks.celery_app:celery_instance worker -l INFO"
@@ -25,7 +25,7 @@ services:
     build:
       context: .
     networks:
-      - myNetwork
+      - HotelsNetwork
     env_file:
       - .env
     command: "celery --app=src.tasks.celery_app:celery_instance beat -l INFO"
