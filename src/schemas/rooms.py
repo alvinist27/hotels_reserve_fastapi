@@ -1,9 +1,17 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from src.schemas.facilities import FacilitySchema
+from src.utils.validation import check_not_only_whitespace
 
 
-class RoomPatchRequestSchema(BaseModel):
+class RoomValidatorMixin:
+    @field_validator('title')
+    @staticmethod
+    def check_not_only_whitespace(user_input: str):
+        return check_not_only_whitespace(user_input)
+
+
+class RoomPatchRequestSchema(BaseModel, RoomValidatorMixin):
     title: str | None = Field(default=None, description='Название комнаты')
     description: str | None = Field(default=None, description='Описание комнаты')
     price: int | None = Field(default=None, description='Цена комнаты')
@@ -11,7 +19,7 @@ class RoomPatchRequestSchema(BaseModel):
     facility_ids: list[int] | None = Field(default=None, description='ID удобства')
 
 
-class RoomPatchSchema(BaseModel):
+class RoomPatchSchema(BaseModel, RoomValidatorMixin):
     hotel_id: int | None = Field(default=None, description='ID отеля')
     title: str | None = Field(default=None, description='Название комнаты')
     description: str | None = Field(default=None, description='Описание комнаты')
@@ -19,7 +27,7 @@ class RoomPatchSchema(BaseModel):
     quantity: int | None = Field(default=None, description='Количество комнат')
 
 
-class RoomAddRequestSchema(BaseModel):
+class RoomAddRequestSchema(BaseModel, RoomValidatorMixin):
     title: str = Field(description='Название комнаты')
     description: str = Field(default='', description='Описание комнаты')
     price: int = Field(description='Цена комнаты')
@@ -27,7 +35,7 @@ class RoomAddRequestSchema(BaseModel):
     facility_ids: list[int] | None = Field(description='ID удобства', default=None)
 
 
-class RoomAddSchema(BaseModel):
+class RoomAddSchema(BaseModel, RoomValidatorMixin):
     hotel_id: int = Field(description='ID отеля')
     title: str = Field(description='Название комнаты')
     description: str = Field(default='', description='Описание комнаты')

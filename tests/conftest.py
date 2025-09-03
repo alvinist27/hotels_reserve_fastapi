@@ -64,7 +64,7 @@ async def register_user(ac, setup_database):
         '/auth/register',
         json={
             'email': 'kot@pes.com',
-            'password': '1234',
+            'password': '123456',
         },
     )
 
@@ -75,7 +75,7 @@ async def authenticated_ac(ac, register_user):
         '/auth/login',
         json={
             'email': 'kot@pes.com',
-            'password': '1234',
+            'password': '123456',
         },
     )
     assert response.status_code == 200

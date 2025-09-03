@@ -31,6 +31,8 @@ async def get_room(hotel_id: int, room_id: int, db: DBDep):
         return await RoomService(db).get_room(room_id, hotel_id=hotel_id)
     except RoomNotFoundException:
         raise RoomNotFoundHTTPException
+    except HotelNotFoundException:
+        raise HotelNotFoundHTTPException
 
 
 @rooms_router.post('/{hotel_id}/rooms')
@@ -49,7 +51,12 @@ async def edit_room(
     room_data: RoomAddRequestSchema,
     db: DBDep,
 ):
-    await RoomService(db).edit_room(hotel_id, room_id, room_data)
+    try:
+        await RoomService(db).edit_room(hotel_id, room_id, room_data)
+    except RoomNotFoundException:
+        raise RoomNotFoundHTTPException
+    except HotelNotFoundException:
+        raise HotelNotFoundHTTPException
     return {'status': 'OK'}
 
 
@@ -60,11 +67,21 @@ async def partially_edit_room(
     room_data: RoomPatchRequestSchema,
     db: DBDep,
 ):
-    await RoomService(db).partially_edit_room(hotel_id, room_id, room_data)
+    try:
+        await RoomService(db).partially_edit_room(hotel_id, room_id, room_data)
+    except RoomNotFoundException:
+        raise RoomNotFoundHTTPException
+    except HotelNotFoundException:
+        raise HotelNotFoundHTTPException
     return {'status': 'OK'}
 
 
 @rooms_router.delete('/{hotel_id}/rooms/{room_id}')
 async def delete_room(hotel_id: int, room_id: int, db: DBDep):
-    await RoomService(db).delete_room(hotel_id, room_id)
+    try:
+        await RoomService(db).delete_room(hotel_id, room_id)
+    except RoomNotFoundException:
+        raise RoomNotFoundHTTPException
+    except HotelNotFoundException:
+        raise HotelNotFoundHTTPException
     return {'status': 'OK'}

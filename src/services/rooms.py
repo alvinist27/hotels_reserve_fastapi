@@ -1,6 +1,7 @@
 from datetime import date
 
 from src.exceptions import (
+    FacilityNotFoundHTTPException,
     HotelNotFoundException,
     ObjectNotFoundException,
     RoomNotFoundException,
@@ -39,12 +40,16 @@ class RoomService(BaseService):
         _room_data = RoomAddSchema(hotel_id=hotel_id, **room_data.model_dump())
         room: RoomSchema = await self.db.rooms.add(_room_data)
 
-        rooms_facilities_data = [
-            RoomFacilitySchema(room_id=room.id, facility_id=f_id) for f_id in room_data.facilities_ids
-        ]
-        if rooms_facilities_data:
-            await self.db.rooms_facilities.add_bulk(rooms_facilities_data)
+        if room_data.facility_ids:
+            rooms_facilities_data = [
+                RoomFacilitySchema(room_id=room.id, facility_id=f_id) for f_id in room_data.facility_ids
+            ]
+            try:
+                await self.db.rooms_facilities.add_bulk(rooms_facilities_data)
+            except ObjectNotFoundException as ex:
+                raise FacilityNotFoundHTTPException from ex
         await self.db.commit()
+        return room
 
     async def edit_room(
         self,
@@ -55,10 +60,9 @@ class RoomService(BaseService):
         await HotelService(self.db).get_hotel_with_check(hotel_id)
         await self.get_room_with_check(room_id)
         _room_data = RoomAddSchema(hotel_id=hotel_id, **room_data.model_dump())
-        await self.db.rooms.edit(_room_data, id=room_id)
-        await self.db.rooms_facilities.set_room_facilities(
-            room_id, facilities_ids=room_data.facilities_ids
-        )
+        await self.db.rooms.update(_room_data, id=room_id)
+        if room_data.facility_ids:
+            await self.db.rooms_facilities.set_room_facilities(room_id, room_data.facility_ids)
         await self.db.commit()
 
     async def partially_edit_room(
@@ -72,11 +76,9 @@ class RoomService(BaseService):
 
         _room_data_dict = room_data.model_dump(exclude_unset=True)
         _room_data = RoomPatchSchema(hotel_id=hotel_id, **_room_data_dict)
-        await self.db.rooms.edit(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
-        if 'facilities_ids' in _room_data_dict:
-            await self.db.rooms_facilities.set_room_facilities(
-                room_id, facilities_ids=_room_data_dict['facilities_ids']
-            )
+        await self.db.rooms.update(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
+        if 'facility_ids' in _room_data_dict:
+            await self.db.rooms_facilities.set_room_facilities(room_id, _room_data_dict['facility_ids'])
         await self.db.commit()
 
     async def delete_room(self, hotel_id: int, room_id: int):

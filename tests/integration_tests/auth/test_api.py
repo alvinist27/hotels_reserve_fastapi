@@ -1,12 +1,13 @@
 import pytest
+from httpx import AsyncClient
 
 
 @pytest.mark.parametrize('email, password, status_code', [
-    ('k0t@pes.com', '1234', 200),
-    ('k0t@pes.com', '1234', 409),
-    ('k0t1@pes.com', '1235', 200),
-    ('abcde', '1235', 422),
-    ('abcde@abc', '1235', 422),
+    ('k0t@pes.com', '123456', 200),
+    ('k0t@pes.com', '123456', 409),
+    ('k0t1@pes.com', '123456', 200),
+    ('abcde', '123456', 422),
+    ('abcde@abc', '123456', 422),
 ])
 async def test_auth_flow(email: str, password: str, status_code: int, ac):
     # /register
@@ -46,3 +47,56 @@ async def test_auth_flow(email: str, password: str, status_code: int, ac):
     resp_logout = await ac.post('/auth/logout')
     assert resp_logout.status_code == 200
     assert 'access_token' not in ac.cookies
+
+
+async def test_register_user(ac: AsyncClient):
+    response = await ac.post(
+        '/auth/register',
+        json={
+            'email': 'test@example.com',
+            'password': 'password123'
+        }
+    )
+    assert response.status_code == 200
+
+async def test_login_user(ac: AsyncClient):
+    response = await ac.post(
+        '/auth/login',
+        json={
+            'email': 'test@example.com',
+            'password': 'password123'
+        }
+    )
+    assert response.status_code == 200
+    assert response.json()['access_token']
+
+async def test_logout_only_once(ac: AsyncClient):
+    response1 = await ac.post('/auth/logout')
+    assert response1.status_code == 200
+
+    response2 = await ac.post('/auth/logout')
+    assert response2.status_code == 400
+
+async def test_cannot_logout_without_token(ac: AsyncClient):
+    response = await ac.post('/auth/logout')
+    assert response.status_code == 400
+
+async def test_cannot_register_with_empty_password(ac: AsyncClient):
+    response = await ac.post(
+        '/auth/register',
+        json={
+            'email': 'test2@example.com',
+            'password': '',
+        },
+    )
+    assert response.status_code == 422
+
+async def test_cannot_login_with_empty_password(ac: AsyncClient):
+    response = await ac.post(
+        '/auth/login',
+        json={
+            'email': 'test@example.com',
+            'password': '',
+        },
+    )
+    assert response.status_code == 422

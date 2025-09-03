@@ -4,7 +4,15 @@ from fastapi import APIRouter, Body, Query
 from fastapi_cache.decorator import cache
 
 from src.api.dependencies import DBDep, PaginationDep
-from src.exceptions import HotelNotFoundHTTPException, ObjectNotFoundException
+from src.exceptions import (
+    HotelAlreadyExistsException,
+    HotelAlreadyExistsHTTPException,
+    HotelDataHTTPException,
+    HotelNotFoundException,
+    HotelNotFoundHTTPException,
+    InputDataException,
+    ObjectNotFoundException,
+)
 from src.schemas.hotels import HotelAddSchema, HotelPatchSchema
 from src.services.hotels import HotelService
 
@@ -60,13 +68,19 @@ async def create_hotel(
         }
     ),
 ):
-    hotel = await HotelService(db).add_hotel(hotel_data)
+    try:
+        hotel = await HotelService(db).add_hotel(hotel_data)
+    except HotelAlreadyExistsException:
+        raise HotelAlreadyExistsHTTPException
     return {'status': 'OK', 'data': hotel}
 
 
 @hotels_router.put('/{hotel_id}')
 async def edit_hotel(hotel_id: int, hotel_data: HotelAddSchema, db: DBDep):
-    await HotelService(db).edit_hotel(hotel_id, hotel_data)
+    try:
+        await HotelService(db).edit_hotel(hotel_id, hotel_data)
+    except InputDataException:
+        raise HotelDataHTTPException
     return {'status': 'OK'}
 
 
@@ -76,11 +90,17 @@ async def partially_edit_hotel(
     hotel_data: HotelPatchSchema,
     db: DBDep,
 ):
-    await HotelService(db).edit_hotel_partially(hotel_id, hotel_data, exclude_unset=True)
+    try:
+        await HotelService(db).edit_hotel_partially(hotel_id, hotel_data)
+    except InputDataException:
+        raise HotelDataHTTPException
     return {'status': 'OK'}
 
 
 @hotels_router.delete('/{hotel_id}')
 async def delete_hotel(hotel_id: int, db: DBDep):
-    await HotelService(db).delete_hotel(hotel_id)
+    try:
+        await HotelService(db).delete_hotel(hotel_id)
+    except HotelNotFoundException:
+        raise HotelNotFoundHTTPException
     return {'status': 'OK'}

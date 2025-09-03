@@ -22,8 +22,16 @@ class HotelNotFoundException(HotelAppException):
     detail = 'Hotel not found'
 
 
+class FacilityAlreadyExistsException(HotelAppException):
+    detail = 'Facility not found'
+
+
 class ObjectAlreadyExistsException(HotelAppException):
     detail = 'Object already exists'
+
+
+class InputDataException(HotelAppException):
+    detail = 'Input data exists'
 
 
 class AllRoomsAreBookedException(HotelAppException):
@@ -44,6 +52,10 @@ class IncorrectPasswordException(HotelAppException):
 
 class UserAlreadyExistsException(HotelAppException):
     detail = 'User already exists'
+
+
+class HotelAlreadyExistsException(HotelAppException):
+    detail = 'Hotel already exists'
 
 
 def check_date_to_after_date_from(date_from: date, date_to: date) -> None:
@@ -69,6 +81,11 @@ class RoomNotFoundHTTPException(HotelAppHTTPException):
     detail = 'Room not found'
 
 
+class FacilityNotFoundHTTPException(HotelAppHTTPException):
+    status_code = 404
+    detail = 'Facility not found'
+
+
 class AllRoomsAreBookedHTTPException(HotelAppHTTPException):
     status_code = 409
     detail = 'All rooms are booked'
@@ -86,6 +103,21 @@ class EmailNotRegisteredHTTPException(HotelAppHTTPException):
 class UserEmailAlreadyExistsHTTPException(HotelAppHTTPException):
     status_code = 409
     detail = 'User already exists'
+
+
+class HotelAlreadyExistsHTTPException(HotelAppHTTPException):
+    status_code = 409
+    detail = 'Hotel already exists'
+
+
+class HotelDataHTTPException(HotelAppHTTPException):
+    status_code = 422
+    detail = 'Bad data for hotel entity'
+
+
+class FacilityAlreadyExistsHTTPException(HotelAppHTTPException):
+    status_code = 409
+    detail = 'Facility already exists'
 
 
 class IncorrectPasswordHTTPException(HotelAppHTTPException):

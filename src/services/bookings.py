@@ -1,4 +1,4 @@
-from src.exceptions import ObjectNotFoundException, RoomNotFoundException
+from src.exceptions import HotelNotFoundException, ObjectNotFoundException, RoomNotFoundException
 from src.schemas.bookings import BookingAddSchema, BookingRequestAddSchema
 from src.schemas.hotels import HotelSchema
 from src.schemas.rooms import RoomSchema
@@ -11,7 +11,10 @@ class BookingService(BaseService):
             room: RoomSchema = await self.db.rooms.get_one(id=booking_data.room_id)
         except ObjectNotFoundException as ex:
             raise RoomNotFoundException from ex
-        hotel: HotelSchema = await self.db.hotels.get_one(id=room.hotel_id)
+        try:
+            hotel: HotelSchema = await self.db.hotels.get_one(id=room.hotel_id)
+        except ObjectNotFoundException as ex:
+            raise HotelNotFoundException from ex
         room_price: int = room.price
         _booking_data = BookingAddSchema(
             user_id=user_id,

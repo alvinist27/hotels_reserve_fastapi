@@ -6,7 +6,7 @@ from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from src.database import Base
-from src.exceptions import ObjectAlreadyExistsException, ObjectNotFoundException
+from src.exceptions import InputDataException, ObjectAlreadyExistsException, ObjectNotFoundException
 from src.repositories.mappers.base import DataMapper
 
 
@@ -58,7 +58,10 @@ class BaseRepository:
 
     async def add_bulk(self, add_data: list[BaseModel]) -> None:
         insert_statement = insert(self.model).values([item.model_dump() for item in add_data])
-        await self.session.execute(insert_statement)
+        try:
+            await self.session.execute(insert_statement)
+        except IntegrityError as exception:
+            raise ObjectNotFoundException from exception
 
     async def update(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
         update_stmt = (
@@ -66,7 +69,10 @@ class BaseRepository:
             .filter_by(**filter_by)
             .values(**data.model_dump(exclude_unset=exclude_unset, exclude_none=exclude_unset))
         )
-        await self.session.execute(update_stmt)
+        try:
+            await self.session.execute(update_stmt)
+        except IntegrityError as exception:
+            raise InputDataException from exception
 
     async def delete(self, **filter_by) -> None:
         delete_stmt = delete(self.model).filter_by(**filter_by)

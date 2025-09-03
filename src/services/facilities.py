@@ -1,11 +1,15 @@
+from src.exceptions import FacilityAlreadyExistsException, ObjectAlreadyExistsException
 from src.schemas.facilities import FacilityAddSchema
 from src.services.base import BaseService
 
 
 class FacilityService(BaseService):
     async def create_facility(self, data: FacilityAddSchema):
-        facility = await self.db.facilities.add(data)
-        await self.db.commit()
+        try:
+            facility = await self.db.facilities.add(data)
+            await self.db.commit()
+        except ObjectAlreadyExistsException:
+            raise FacilityAlreadyExistsException
         return facility
 
     async def get_facilities(self):
