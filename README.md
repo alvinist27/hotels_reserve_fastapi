@@ -29,5 +29,7 @@ docker run --name hotels_reserve \
 
 docker run --name hotels_nginx \
     --volume ./nginx.conf:/etc/nginx/nginx.conf \
+    --volume /etc/letsencrypt:/etc/letsencrypt \
+    --volume /var/lib/letsencrypt:/var/lib/letsencrypt \
     --network=HotelsNetwork \
     -p 80:80 -d nginx
